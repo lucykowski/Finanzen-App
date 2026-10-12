@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Finanzen</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#185fa5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Finanzen">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --surface-2:#ffffff; --surface-1:#f5f4ef; --surface-0:#f0efe8;
+  --text-primary:#1c1c1a; --text-secondary:#5f5e5a; --text-muted:#888780;
+  --border:#e3e1d8; --border-strong:#c9c7bc;
+  --bg-accent:#e6f1fb; --text-accent:#185fa5; --border-accent:#378ADD;
+  --bg-danger:#fcebeb; --text-danger:#a32d2d; --border-danger:#e24b4a;
+  --bg-success:#eaf3de; --text-success:#3b6d11;
+  --bg-warning:#faeeda; --text-warning:#854f0b;
+  --radius:10px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+:root:not([data-theme="light"]){
+  @media (prefers-color-scheme: dark){
+    --surface-2:#242320; --surface-1:#1c1b19; --surface-0:#161514;
+    --text-primary:#f1efe8; --text-secondary:#b4b2a9; --text-muted:#888780;
+    --border:#38362f; --border-strong:#48453c;
+    --bg-accent:#0c447c; --text-accent:#85B7EB; --border-accent:#378ADD;
+    --bg-danger:#501313; --text-danger:#F09595; --border-danger:#E24B4A;
+    --bg-success:#173404; --text-success:#97C459;
+    --bg-warning:#412402; --text-warning:#EF9F27;
+  }
+}
+:root[data-theme="dark"]{
+  --surface-2:#242320; --surface-1:#1c1b19; --surface-0:#161514;
+  --text-primary:#f1efe8; --text-secondary:#b4b2a9; --text-muted:#888780;
+  --border:#38362f; --border-strong:#48453c;
+  --bg-accent:#0c447c; --text-accent:#85B7EB; --border-accent:#378ADD;
+  --bg-danger:#501313; --text-danger:#F09595; --border-danger:#E24B4A;
+  --bg-success:#173404; --text-success:#97C459;
+  --bg-warning:#412402; --text-warning:#EF9F27;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0; font-family:var(--font-sans); background:var(--surface-0); color:var(--text-primary);
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  -webkit-tap-highlight-color: transparent;
+}
+#app{max-width:480px; margin:0 auto; min-height:100%; display:flex; flex-direction:column;}
+header{
+  position:sticky; top:0; padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;
+  background:var(--surface-0); z-index:10; display:flex; align-items:center; justify-content:space-between;
+}
+header h1{font-size:19px; font-weight:600; margin:0;}
+main{flex:1; padding:0 16px 90px;}
+.card{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px;}
+.card-title{font-size:13px; color:var(--text-secondary); margin:0 0 6px;}
+.big-number{font-size:28px; font-weight:600; margin:0;}
+.row{display:flex; justify-content:space-between; align-items:center;}
+.muted{color:var(--text-secondary); font-size:13px;}
+.small{font-size:12px; color:var(--text-muted);}
+nav{
+  position:fixed; bottom:0; left:0; right:0; background:var(--surface-2); border-top:1px solid var(--border);
+  padding-bottom:env(safe-area-inset-bottom,0px); z-index:20;
+}
+.navinner{max-width:480px; margin:0 auto; display:flex;}
+nav button{
+  flex:1; background:none; border:none; padding:10px 0 8px; display:flex; flex-direction:column; align-items:center;
+  gap:3px; color:var(--text-muted); font-size:10.5px; font-family:inherit;
+}
+nav button i{font-size:21px;}
+nav button.active{color:var(--text-accent);}
+.fab{
+  position:fixed; right:16px; bottom:calc(76px + env(safe-area-inset-bottom,0px)); z-index:20;
+  width:56px; height:56px; border-radius:50%; background:var(--text-accent); color:#fff; border:none;
+  font-size:26px; box-shadow:0 2px 10px rgba(0,0,0,0.25); display:flex; align-items:center; justify-content:center;
+}
+.list-item{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border);}
+.list-item:last-child{border-bottom:none;}
+.list-item .meta{display:flex; flex-direction:column; gap:2px;}
+.list-item .name{font-size:15px; font-weight:500;}
+.list-item .amount{font-size:15px; font-weight:600;}
+.cat-dot{width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:7px;}
+input,select,textarea{
+  width:100%; background:var(--surface-1); border:1px solid var(--border); border-radius:8px;
+  padding:10px 12px; font-size:16px; color:var(--text-primary); font-family:inherit; margin-bottom:12px;
+}
+label{font-size:13px; color:var(--text-secondary); display:block; margin-bottom:4px;}
+button.primary{
+  width:100%; background:var(--text-accent); color:#fff; border:none; border-radius:8px; padding:13px;
+  font-size:16px; font-weight:600; font-family:inherit;
+}
+button.secondary{
+  width:100%; background:var(--surface-1); color:var(--text-primary); border:1px solid var(--border);
+  border-radius:8px; padding:13px; font-size:15px; font-family:inherit; margin-top:8px;
+}
+button.ghost-del{background:none; border:none; color:var(--text-danger); font-size:13px; font-family:inherit; padding:4px;}
+.overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:50; display:none;
+  align-items:flex-end; justify-content:center;
+}
+.overlay.open{display:flex;}
+.sheet{
+  background:var(--surface-2); width:100%; max-width:480px; border-radius:16px 16px 0 0;
+  padding:20px 16px calc(24px + env(safe-area-inset-bottom,0px)); max-height:85vh; overflow-y:auto;
+}
+.sheet h2{font-size:17px; margin:0 0 16px; font-weight:600;}
+.cat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px;}
+.cat-chip{
+  border:1px solid var(--border); border-radius:8px; padding:9px 4px; text-align:center; font-size:12px;
+  background:var(--surface-1); display:flex; flex-direction:column; align-items:center; gap:4px;
+}
+.cat-chip.sel{border-color:var(--border-accent); background:var(--bg-accent); color:var(--text-accent); font-weight:600;}
+.cat-chip i{font-size:18px;}
+.progress-bar{height:8px; border-radius:4px; background:var(--surface-1); overflow:hidden; margin-top:8px;}
+.progress-fill{height:100%; border-radius:4px;}
+.pot{border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:10px;}
+.pot-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+.tab-switch{display:flex; background:var(--surface-1); border-radius:8px; padding:3px; margin-bottom:14px;}
+.tab-switch button{flex:1; background:none; border:none; padding:8px; font-size:13px; border-radius:6px; color:var(--text-secondary); font-family:inherit;}
+.tab-switch button.active{background:var(--surface-2); color:var(--text-primary); font-weight:600;}
+.empty{text-align:center; padding:40px 10px; color:var(--text-muted); font-size:14px;}
+.err{color:var(--text-danger); font-size:12.5px; margin:-8px 0 10px;}
+a.linklike{color:var(--text-accent); text-decoration:none;}
+canvas{max-width:100%;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 id="headerTitle">Finanzen</h1>
+    <span class="small" id="headerSub"></span>
+  </header>
+  <main id="main"></main>
+  <button class="fab" id="fabAdd" aria-label="Ausgabe hinzufügen"><i class="ti ti-plus"></i></button>
+  <nav>
+    <div class="navinner">
+      <button data-tab="dashboard"><i class="ti ti-home"></i>Start</button>
+      <button data-tab="ausgaben"><i class="ti ti-receipt"></i>Ausgaben</button>
+      <button data-tab="fixkosten"><i class="ti ti-repeat"></i>Fixkosten</button>
+      <button data-tab="toepfe"><i class="ti ti-pig-money"></i>Töpfe</button>
+      <button data-tab="statistik"><i class="ti ti-chart-bar"></i>Statistik</button>
+    </div>
+  </nav>
+</div>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheetContent"></div></div>
+<input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importData(event)">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+/* ---------- Kategorien ---------- */
+const CATEGORIES = [
+  {id:'lebensmittel', name:'Lebensmittel / Haushalt', icon:'ti-shopping-cart', color:'#639922'},
+  {id:'freizeit', name:'Freizeit', icon:'ti-ball-football', color:'#378ADD'},
+  {id:'geschenke', name:'Geschenke', icon:'ti-gift', color:'#D4537E'},
+  {id:'konsum', name:'Konsum (Klamotten, Spiele...)', icon:'ti-shopping-bag', color:'#BA7517'},
+  {id:'sonstiges', name:'Sonstiges', icon:'ti-dots', color:'#888780'},
+];
+const catById = id => CATEGORIES.find(c=>c.id===id) || CATEGORIES[CATEGORIES.length-1];
+
+/* ---------- State ---------- */
+let state = {
+  income: 0,
+  fixkosten: [],   // {id,name,amount}
+  pots: [],        // {id,name,monthly,balance}
+  expenses: [],    // {id,amount,categoryId,note,date}
+};
+let dbReady = false;
+let currentTab = 'dashboard';
+const STORAGE_KEY = 'finanzen-app-state-v1';
+
+function uid(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
+function fmt(n){ return (Math.round(n*100)/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+function monthKey(d){ const dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); }
+function thisMonthKey(){ return monthKey(new Date()); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+/* ---------- Persistence ---------- */
+function initDB(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){ state = Object.assign(state, JSON.parse(raw)); }
+  }catch(e){ console.error('Laden fehlgeschlagen', e); }
+  dbReady = true;
+  render();
+}
+let saveTimer=null;
+function saveState(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.error('Speichern fehlgeschlagen', e); alert('Speichern fehlgeschlagen: Speicher evtl. voll.'); }
+  }, 200);
+}
+
+/* ---------- Ensure monthly pot allocation happened for current month ---------- */
+function ensureMonthRollover(){
+  const mk = thisMonthKey();
+  if(state.lastAllocatedMonth === mk) return;
+  // Grundrate wird nicht als Buchung sichtbar aufaddiert, sondern einfach als "verfügbar für diesen Monat" markiert.
+  // Wir verteilen die monatliche Grundrate der Töpfe in den jeweiligen Topf-Saldo.
+  state.pots.forEach(p=>{
+    p.balance = (p.balance||0) + (p.monthly||0);
+  });
+  state.lastAllocatedMonth = mk;
+  saveState();
+}
+
+/* ---------- Derived values ---------- */
+function totalFixkosten(){ return state.fixkosten.reduce((s,f)=>s+Number(f.amount||0),0); }
+function totalPotMonthly(){ return state.pots.reduce((s,p)=>s+Number(p.monthly||0),0); }
+function monthExpenses(mk=thisMonthKey()){ return state.expenses.filter(e=>monthKey(e.date)===mk); }
+function monthExpenseTotal(mk=thisMonthKey()){ return monthExpenses(mk).reduce((s,e)=>s+Number(e.amount),0); }
+function remainingBudget(){
+  return Number(state.income||0) - totalFixkosten() - totalPotMonthly();
+}
+function spentOfRemaining(){ return monthExpenseTotal(); }
+
+/* ---------- Rendering ---------- */
+function render(){
+  if(!dbReady){ document.getElementById('main').innerHTML = '<div class="empty">Lade...</div>'; return; }
+  ensureMonthRollover();
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===currentTab));
+  const titles = {dashboard:'Finanzen', ausgaben:'Ausgaben', fixkosten:'Fixkosten', toepfe:'Spartöpfe', statistik:'Statistik'};
+  document.getElementById('headerTitle').textContent = titles[currentTab];
+  document.getElementById('headerSub').textContent = new Date().toLocaleDateString('de-DE',{month:'long', year:'numeric'});
+  const main = document.getElementById('main');
+  if(currentTab==='dashboard') main.innerHTML = renderDashboard();
+  else if(currentTab==='ausgaben') main.innerHTML = renderAusgaben();
+  else if(currentTab==='fixkosten') main.innerHTML = renderFixkosten();
+  else if(currentTab==='toepfe') main.innerHTML = renderToepfe();
+  else if(currentTab==='statistik') main.innerHTML = renderStatistik();
+  document.getElementById('fabAdd').style.display = (currentTab==='statistik') ? 'none' : 'flex';
+  if(currentTab==='statistik') setTimeout(drawCharts, 0);
+}
+
+function renderDashboard(){
+  const rem = remainingBudget();
+  const spent = spentOfRemaining();
+  const left = rem - spent;
+  const pct = rem>0 ? Math.min(100, Math.max(0,(spent/rem)*100)) : 0;
+  const barColor = pct<70 ? '#639922' : pct<100 ? '#EF9F27' : '#E24B4A';
+  let html = '';
+  if(!state.income){
+    html += `<div class="card"><p class="card-title">Einnahmen festlegen</p>
+      <p class="muted" style="margin-bottom:12px;">Trage dein monatliches Netto-Einkommen ein, um loszulegen.</p>
+      <button class="primary" onclick="openIncomeSheet()">Einnahmen eintragen</button></div>`;
+  }
+  html += `<div class="card">
+    <div class="row"><p class="card-title">Verfügbar für diesen Monat</p>
+      <span class="small linklike" onclick="openIncomeSheet()" style="cursor:pointer;">bearbeiten</span></div>
+    <p class="big-number" style="color:${left<0?'var(--text-danger)':'var(--text-primary)'}">${fmt(left)}</p>
+    <p class="small">von ${fmt(rem)} verfügbar · ${fmt(spent)} ausgegeben</p>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%; background:${barColor};"></div></div>
+  </div>`;
+  html += `<div class="card">
+    <p class="card-title">Monatsübersicht</p>
+    <div class="list-item"><span class="muted">Einnahmen</span><span>${fmt(state.income||0)}</span></div>
+    <div class="list-item"><span class="muted">Fixkosten</span><span>- ${fmt(totalFixkosten())}</span></div>
+    <div class="list-item"><span class="muted">Sparraten</span><span>- ${fmt(totalPotMonthly())}</span></div>
+    <div class="list-item"><span style="font-weight:600;">Verfügbar</span><span style="font-weight:600;">${fmt(rem)}</span></div>
+  </div>`;
+  const recent = [...state.expenses].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  html += `<div class="card"><p class="card-title">Letzte Ausgaben</p>`;
+  if(recent.length===0){ html += `<p class="small">Noch keine Ausgaben eingetragen.</p>`; }
+  else{
+    recent.forEach(e=>{
+      const c = catById(e.categoryId);
+      html += `<div class="list-item"><div class="meta">
+        <span class="name"><span class="cat-dot" style="background:${c.color}"></span>${c.name}</span>
+        <span class="small">${e.note? e.note+' · ':''}${new Date(e.date).toLocaleDateString('de-DE')}</span>
+      </div><span class="amount">- ${fmt(e.amount)}</span></div>`;
+    });
+  }
+  html += `</div>`;
+  html += `<div class="card">
+    <p class="card-title">Backup</p>
+    <p class="small" style="margin-bottom:10px;">Deine Daten liegen nur auf diesem Gerät. Regelmäßig sichern, damit nichts verloren geht.</p>
+    <button class="secondary" onclick="exportData()" style="margin-top:0;">Backup exportieren</button>
+    <button class="secondary" onclick="triggerImport()">Backup einspielen</button>
+  </div>`;
+  return html;
+}
+
+function renderAusgaben(){
+  const grouped = {};
+  [...state.expenses].sort((a,b)=>b.date.localeCompare(a.date)).forEach(e=>{
+    const mk = monthKey(e.date);
+    (grouped[mk] = grouped[mk]||[]).push(e);
+  });
+  const keys = Object.keys(grouped).sort().reverse();
+  if(keys.length===0) return `<div class="empty"><i class="ti ti-receipt" style="font-size:32px;"></i><p>Noch keine Ausgaben.<br>Tippe auf + zum Hinzufügen.</p></div>`;
+  let html='';
+  keys.forEach(mk=>{
+    const [y,m] = mk.split('-');
+    const label = new Date(y,m-1,1).toLocaleDateString('de-DE',{month:'long', year:'numeric'});
+    const sum = grouped[mk].reduce((s,e)=>s+Number(e.amount),0);
+    html += `<div class="card"><div class="row" style="margin-bottom:4px;"><p class="card-title" style="margin:0;">${label}</p><span class="small">${fmt(sum)}</span></div>`;
+    grouped[mk].forEach(e=>{
+      const c = catById(e.categoryId);
+      html += `<div class="list-item" onclick="openExpenseSheet('${e.id}')" style="cursor:pointer;"><div class="meta">
+        <span class="name"><span class="cat-dot" style="background:${c.color}"></span>${c.name}</span>
+        <span class="small">${e.note? e.note+' · ':''}${new Date(e.date).toLocaleDateString('de-DE')}</span>
+      </div><span class="amount">- ${fmt(e.amount)}</span></div>`;
+    });
+    html += `</div>`;
+  });
+  return html;
+}
+
+function renderFixkosten(){
+  let html = `<div class="card"><p class="card-title">Fixkosten gesamt</p><p class="big-number">${fmt(totalFixkosten())}</p><p class="small">pro Monat</p></div>`;
+  html += `<div class="card">`;
+  if(state.fixkosten.length===0){ html += `<p class="small">Noch keine Fixkosten eingetragen.</p>`; }
+  state.fixkosten.forEach(f=>{
+    html += `<div class="list-item"><span class="name">${f.name}</span>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="amount">${fmt(f.amount)}</span>
+        <button class="ghost-del" onclick="deleteFixkosten('${f.id}')"><i class="ti ti-trash"></i></button>
+      </div></div>`;
+  });
+  html += `</div><button class="primary" onclick="openFixkostenSheet()">Fixkosten hinzufügen</button>`;
+  return html;
+}
+
+function renderToepfe(){
+  let html = `<div class="card"><p class="card-title">Monatliche Sparrate gesamt</p><p class="big-number">${fmt(totalPotMonthly())}</p></div>`;
+  if(state.pots.length===0){ html += `<div class="card"><p class="small">Noch keine Spartöpfe angelegt.</p></div>`; }
+  state.pots.forEach(p=>{
+    html += `<div class="pot">
+      <div class="pot-top"><span style="font-weight:500;">${p.name}</span>
+        <button class="ghost-del" onclick="deletePot('${p.id}')"><i class="ti ti-trash"></i></button></div>
+      <p class="big-number" style="font-size:20px;">${fmt(p.balance||0)}</p>
+      <p class="small">+ ${fmt(p.monthly||0)} / Monat</p>
+      <button class="secondary" style="margin-top:8px;" onclick="openTransferSheet('${p.id}')">Umbuchen</button>
+    </div>`;
+  });
+  html += `<button class="primary" onclick="openPotSheet()">Spartopf anlegen</button>`;
+  return html;
+}
+
+function renderStatistik(){
+  const months = {};
+  state.expenses.forEach(e=>{ const mk=monthKey(e.date); months[mk]=(months[mk]||0)+Number(e.amount); });
+  const sortedMonths = Object.keys(months).sort();
+  const thisM = monthExpenses();
+  const byCat = {};
+  thisM.forEach(e=>{ byCat[e.categoryId]=(byCat[e.categoryId]||0)+Number(e.amount); });
+  const hasData = thisM.length>0;
+  let html = `<div class="card"><p class="card-title">Ausgaben nach Kategorie (dieser Monat)</p>`;
+  if(!hasData){ html += `<p class="small">Noch keine Ausgaben diesen Monat.</p></div>`; }
+  else{
+    html += `<div style="position:relative; height:220px; margin:10px 0;"><canvas id="catChart"></canvas></div>`;
+    CATEGORIES.forEach(c=>{
+      const v = byCat[c.id]||0;
+      if(v>0) html += `<div class="list-item"><span class="name"><span class="cat-dot" style="background:${c.color}"></span>${c.name}</span><span class="amount">${fmt(v)}</span></div>`;
+    });
+    html += `</div>`;
+  }
+  html += `<div class="card"><p class="card-title">Verlauf über Monate</p>`;
+  if(sortedMonths.length===0){ html += `<p class="small">Noch keine Daten.</p></div>`; }
+  else{
+    html += `<div style="position:relative; height:220px; margin:10px 0;"><canvas id="trendChart"></canvas></div></div>`;
+  }
+  window.__statsData = {byCat, sortedMonths, months};
+  return html;
+}
+
+function drawCharts(){
+  const d = window.__statsData;
+  if(!d) return;
+  const catCanvas = document.getElementById('catChart');
+  if(catCanvas){
+    const labels=[], data=[], colors=[];
+    CATEGORIES.forEach(c=>{ if(d.byCat[c.id]>0){ labels.push(c.name); data.push(Math.round(d.byCat[c.id]*100)/100); colors.push(c.color); } });
+    new Chart(catCanvas, {type:'doughnut', data:{labels, datasets:[{data, backgroundColor:colors, borderWidth:0}]},
+      options:{plugins:{legend:{display:false}}, cutout:'60%'}});
+  }
+  const trendCanvas = document.getElementById('trendChart');
+  if(trendCanvas){
+    const labels = d.sortedMonths.map(mk=>{ const [y,m]=mk.split('-'); return new Date(y,m-1,1).toLocaleDateString('de-DE',{month:'short'}); });
+    const data = d.sortedMonths.map(mk=>Math.round(d.months[mk]*100)/100);
+    new Chart(trendCanvas, {type:'bar', data:{labels, datasets:[{data, backgroundColor:'#378ADD', borderRadius:4}]},
+      options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}});
+  }
+}
+
+/* ---------- Sheets ---------- */
+function openSheet(html){ document.getElementById('sheetContent').innerHTML = html; document.getElementById('overlay').classList.add('open'); }
+function closeSheet(){ document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('overlay').addEventListener('click', e=>{ if(e.target.id==='overlay') closeSheet(); });
+
+function openIncomeSheet(){
+  openSheet(`<h2>Monatliches Einkommen</h2>
+    <label>Netto-Einnahmen</label>
+    <input type="number" inputmode="decimal" id="incomeInput" value="${state.income||''}" placeholder="z. B. 2500">
+    <p class="err" id="incomeErr" style="display:none;">Bitte einen gültigen Betrag eingeben.</p>
+    <button class="primary" onclick="saveIncome()">Speichern</button>
+    <button class="secondary" onclick="closeSheet()">Abbrechen</button>`);
+}
+function saveIncome(){
+  const v = Number(document.getElementById('incomeInput').value);
+  if(!v || v<=0){ document.getElementById('incomeErr').style.display='block'; return; }
+  state.income = v; saveState(); closeSheet(); render();
+}
+
+function openFixkostenSheet(){
+  openSheet(`<h2>Fixkosten hinzufügen</h2>
+    <label>Bezeichnung</label>
+    <input type="text" id="fkName" placeholder="z. B. Miete">
+    <label>Betrag pro Monat</label>
+    <input type="number" inputmode="decimal" id="fkAmount" placeholder="z. B. 650">
+    <p class="err" id="fkErr" style="display:none;">Bitte Bezeichnung und gültigen Betrag angeben.</p>
+    <button class="primary" onclick="saveFixkosten()">Hinzufügen</button>
+    <button class="secondary" onclick="closeSheet()">Abbrechen</button>`);
+}
+function saveFixkosten(){
+  const name = document.getElementById('fkName').value.trim();
+  const amount = Number(document.getElementById('fkAmount').value);
+  if(!name || !amount || amount<=0){ document.getElementById('fkErr').style.display='block'; return; }
+  state.fixkosten.push({id:uid(), name, amount});
+  saveState(); closeSheet(); render();
+}
+function deleteFixkosten(id){ state.fixkosten = state.fixkosten.filter(f=>f.id!==id); saveState(); render(); }
+
+function openPotSheet(){
+  openSheet(`<h2>Spartopf anlegen</h2>
+    <label>Name</label>
+    <input type="text" id="potName" placeholder="z. B. Urlaub">
+    <label>Monatliche Rate</label>
+    <input type="number" inputmode="decimal" id="potMonthly" placeholder="z. B. 100">
+    <p class="err" id="potErr" style="display:none;">Bitte Name und gültige Rate angeben.</p>
+    <button class="primary" onclick="savePot()">Anlegen</button>
+    <button class="secondary" onclick="closeSheet()">Abbrechen</button>`);
+}
+function savePot(){
+  const name = document.getElementById('potName').value.trim();
+  const monthly = Number(document.getElementById('potMonthly').value);
+  if(!name || !monthly || monthly<=0){ document.getElementById('potErr').style.display='block'; return; }
+  state.pots.push({id:uid(), name, monthly, balance:0});
+  saveState(); closeSheet(); render();
+}
+function deletePot(id){ state.pots = state.pots.filter(p=>p.id!==id); saveState(); render(); }
+
+function openTransferSheet(potId){
+  const pot = state.pots.find(p=>p.id===potId);
+  const others = state.pots.filter(p=>p.id!==potId);
+  openSheet(`<h2>Umbuchen: ${pot.name}</h2>
+    <label>Betrag</label>
+    <input type="number" inputmode="decimal" id="trAmount" placeholder="z. B. 50">
+    <label>Richtung</label>
+    <select id="trDir">
+      <option value="out">von "${pot.name}" abziehen</option>
+      <option value="in">zu "${pot.name}" hinzufügen</option>
+    </select>
+    ${others.length ? `<label>Optional: in/aus anderem Topf verbuchen</label>
+    <select id="trOther"><option value="">— kein anderer Topf —</option>
+      ${others.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select>` : ''}
+    <p class="err" id="trErr" style="display:none;"></p>
+    <button class="primary" onclick="saveTransfer('${potId}')">Umbuchen</button>
+    <button class="secondary" onclick="closeSheet()">Abbrechen</button>`);
+}
+function saveTransfer(potId){
+  const amount = Number(document.getElementById('trAmount').value);
+  const dir = document.getElementById('trDir').value;
+  const otherSel = document.getElementById('trOther');
+  const otherId = otherSel ? otherSel.value : '';
+  const errEl = document.getElementById('trErr');
+  if(!amount || amount<=0){ errEl.textContent='Bitte einen gültigen Betrag eingeben.'; errEl.style.display='block'; return; }
+  const pot = state.pots.find(p=>p.id===potId);
+  const delta = dir==='out' ? -amount : amount;
+  if(dir==='out' && (pot.balance||0) < amount){ errEl.textContent='Nicht genug Guthaben in diesem Topf.'; errEl.style.display='block'; return; }
+  pot.balance = (pot.balance||0) + delta;
+  if(otherId){
+    const other = state.pots.find(p=>p.id===otherId);
+    if(dir==='out'){
+      other.balance = (other.balance||0) + amount;
+    } else {
+      if((other.balance||0) < amount){ errEl.textContent='Nicht genug Guthaben im anderen Topf.'; errEl.style.display='block'; pot.balance -= delta; return; }
+      other.balance = (other.balance||0) - amount;
+    }
+  }
+  saveState(); closeSheet(); render();
+}
+
+let editingExpenseId = null;
+function openAddExpenseSheet(){
+  editingExpenseId = null;
+  openSheet(expenseSheetHtml({amount:'', categoryId:CATEGORIES[0].id, note:'', date:todayStr()}));
+}
+function openExpenseSheet(id){
+  editingExpenseId = id;
+  const e = state.expenses.find(x=>x.id===id);
+  openSheet(expenseSheetHtml(e));
+}
+function expenseSheetHtml(e){
+  const catGrid = CATEGORIES.map(c=>`<div class="cat-chip ${c.id===e.categoryId?'sel':''}" data-cat="${c.id}" onclick="selectCat('${c.id}')">
+    <i class="ti ${c.icon}"></i>${c.name.split(' ')[0]}</div>`).join('');
+  return `<h2>${editingExpenseId? 'Ausgabe bearbeiten':'Ausgabe hinzufügen'}</h2>
+    <label>Betrag</label>
+    <input type="number" inputmode="decimal" id="exAmount" value="${e.amount}" placeholder="z. B. 12.50">
+    <label>Kategorie</label>
+    <div class="cat-grid" id="catGrid">${catGrid}</div>
+    <label>Notiz (optional)</label>
+    <input type="text" id="exNote" value="${e.note||''}" placeholder="z. B. Wocheneinkauf">
+    <label>Datum</label>
+    <input type="date" id="exDate" value="${e.date}">
+    <p class="err" id="exErr" style="display:none;">Bitte Betrag und Kategorie angeben.</p>
+    <button class="primary" onclick="saveExpense()">${editingExpenseId? 'Speichern':'Hinzufügen'}</button>
+    ${editingExpenseId? `<button class="secondary" style="color:var(--text-danger);" onclick="deleteExpense()">Löschen</button>`:''}
+    <button class="secondary" onclick="closeSheet()">Abbrechen</button>`;
+}
+let selectedCatId = null;
+function selectCat(id){
+  selectedCatId = id;
+  document.querySelectorAll('#catGrid .cat-chip').forEach(el=>el.classList.toggle('sel', el.dataset.cat===id));
+}
+function saveExpense(){
+  const amount = Number(document.getElementById('exAmount').value);
+  const note = document.getElementById('exNote').value.trim();
+  const date = document.getElementById('exDate').value || todayStr();
+  const selEl = document.querySelector('#catGrid .cat-chip.sel');
+  const categoryId = selEl ? selEl.dataset.cat : (selectedCatId || CATEGORIES[0].id);
+  if(!amount || amount<=0){ document.getElementById('exErr').style.display='block'; return; }
+  if(editingExpenseId){
+    const e = state.expenses.find(x=>x.id===editingExpenseId);
+    Object.assign(e, {amount, categoryId, note, date});
+  } else {
+    state.expenses.push({id:uid(), amount, categoryId, note, date});
+  }
+  saveState(); closeSheet(); render();
+}
+function deleteExpense(){
+  state.expenses = state.expenses.filter(e=>e.id!==editingExpenseId);
+  saveState(); closeSheet(); render();
+}
+
+/* ---------- Nav ---------- */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click', ()=>{ currentTab = b.dataset.tab; render(); });
+});
+document.getElementById('fabAdd').addEventListener('click', openAddExpenseSheet);
+
+initDB();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW-Registrierung fehlgeschlagen', e));
+  });
+}
+
+/* ---------- Backup: Export / Import ---------- */
+function exportData(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'finanzen-backup-'+todayStr()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function triggerImport(){ document.getElementById('importFile').click(); }
+function importData(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(confirm('Backup einspielen? Das überschreibt deine aktuellen Daten.')){
+        state = Object.assign({income:0,fixkosten:[],pots:[],expenses:[]}, parsed);
+        saveState(); render();
+        alert('Backup eingespielt.');
+      }
+    }catch(e){ alert('Datei konnte nicht gelesen werden.'); }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+</script>
+</body>
+</html>
