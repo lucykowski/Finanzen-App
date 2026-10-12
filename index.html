@@ -576,7 +576,27 @@ initDB();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW-Registrierung fehlgeschlagen', e));
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      // Regelmäßig nach einer neuen Version suchen (z. B. beim App-Start)
+      reg.update().catch(()=>{});
+      reg.addEventListener('updatefound', ()=>{
+        const newWorker = reg.installing;
+        if(!newWorker) return;
+        newWorker.addEventListener('statechange', ()=>{
+          if(newWorker.state==='installed' && navigator.serviceWorker.controller){
+            // Neue Version ist bereit: sofort aktivieren und Seite neu laden
+            newWorker.postMessage({type:'SKIP_WAITING'});
+          }
+        });
+      });
+    }).catch(e=>console.error('SW-Registrierung fehlgeschlagen', e));
+
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+      if(reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
   });
 }
 

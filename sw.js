@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finanzen-cache-v1';
+const CACHE_NAME = 'finanzen-cache-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,12 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -22,8 +28,26 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+function isHtmlRequest(req){
+  return req.mode === 'navigate' || (req.headers.get('accept')||'').includes('text/html');
+}
+
 self.addEventListener('fetch', event => {
   const req = event.request;
+
+  if (isHtmlRequest(req)) {
+    event.respondWith(
+      fetch(req).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const copy = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+        }
+        return networkResponse;
+      }).catch(() => caches.match(req).then(cached => cached || caches.match('./index.html')))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(req).then(cached => {
       const fetchPromise = fetch(req).then(networkResponse => {
