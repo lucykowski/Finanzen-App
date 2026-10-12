@@ -142,7 +142,7 @@ canvas{max-width:100%;}
       <button data-tab="dashboard"><i class="ti ti-home"></i>Start</button>
       <button data-tab="ausgaben"><i class="ti ti-receipt"></i>Ausgaben</button>
       <button data-tab="fixkosten"><i class="ti ti-repeat"></i>Fixkosten</button>
-      <button data-tab="toepfe"><i class="ti ti-pig-money"></i>Töpfe</button>
+      <button data-tab="toepfe"><i class="ti ti-pig-money"></i>Sparen</button>
       <button data-tab="statistik"><i class="ti ti-chart-bar"></i>Statistik</button>
     </div>
   </nav>
@@ -226,7 +226,7 @@ function render(){
   if(!dbReady){ document.getElementById('main').innerHTML = '<div class="empty">Lade...</div>'; return; }
   ensureMonthRollover();
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===currentTab));
-  const titles = {dashboard:'Finanzen', ausgaben:'Ausgaben', fixkosten:'Fixkosten', toepfe:'Spartöpfe', statistik:'Statistik'};
+  const titles = {dashboard:'Finanzen', ausgaben:'Ausgaben', fixkosten:'Fixkosten', toepfe:'Sparen', statistik:'Statistik'};
   document.getElementById('headerTitle').textContent = titles[currentTab];
   document.getElementById('headerSub').textContent = new Date().toLocaleDateString('de-DE',{month:'long', year:'numeric'});
   const main = document.getElementById('main');
@@ -318,10 +318,10 @@ function renderFixkosten(){
   html += `<div class="card">`;
   if(state.fixkosten.length===0){ html += `<p class="small">Noch keine Fixkosten eingetragen.</p>`; }
   state.fixkosten.forEach(f=>{
-    html += `<div class="list-item"><span class="name">${f.name}</span>
-      <div style="display:flex; align-items:center; gap:10px;">
+    html += `<div class="list-item" onclick="openFixkostenSheet('${f.id}')" style="cursor:pointer;"><span class="name">${f.name}</span>
+      <div style="display:flex; align-items:center; gap:4px;">
         <span class="amount">${fmt(f.amount)}</span>
-        <button class="ghost-del" onclick="deleteFixkosten('${f.id}')"><i class="ti ti-trash"></i></button>
+        <i class="ti ti-chevron-right" style="font-size:16px; color:var(--text-muted);"></i>
       </div></div>`;
   });
   html += `</div><button class="primary" onclick="openFixkostenSheet()">Fixkosten hinzufügen</button>`;
@@ -334,7 +334,7 @@ function renderToepfe(){
   state.pots.forEach(p=>{
     html += `<div class="pot">
       <div class="pot-top"><span style="font-weight:500;">${p.name}</span>
-        <button class="ghost-del" onclick="deletePot('${p.id}')"><i class="ti ti-trash"></i></button></div>
+        <button class="ghost-del" onclick="openPotSheet('${p.id}')"><i class="ti ti-edit"></i></button></div>
       <p class="big-number" style="font-size:20px;">${fmt(p.balance||0)}</p>
       <p class="small">+ ${fmt(p.monthly||0)} / Monat</p>
       <button class="secondary" style="margin-top:8px;" onclick="openTransferSheet('${p.id}')">Umbuchen</button>
@@ -409,43 +409,69 @@ function saveIncome(){
   state.income = v; saveState(); closeSheet(); render();
 }
 
-function openFixkostenSheet(){
-  openSheet(`<h2>Fixkosten hinzufügen</h2>
+let editingFixkostenId = null;
+function openFixkostenSheet(id){
+  editingFixkostenId = id || null;
+  const f = id ? state.fixkosten.find(x=>x.id===id) : {name:'', amount:''};
+  openSheet(`<h2>${editingFixkostenId? 'Fixkosten bearbeiten':'Fixkosten hinzufügen'}</h2>
     <label>Bezeichnung</label>
-    <input type="text" id="fkName" placeholder="z. B. Miete">
+    <input type="text" id="fkName" value="${f.name}" placeholder="z. B. Miete">
     <label>Betrag pro Monat</label>
-    <input type="number" inputmode="decimal" id="fkAmount" placeholder="z. B. 650">
+    <input type="number" inputmode="decimal" id="fkAmount" value="${f.amount}" placeholder="z. B. 650">
     <p class="err" id="fkErr" style="display:none;">Bitte Bezeichnung und gültigen Betrag angeben.</p>
-    <button class="primary" onclick="saveFixkosten()">Hinzufügen</button>
+    <button class="primary" onclick="saveFixkosten()">${editingFixkostenId? 'Speichern':'Hinzufügen'}</button>
+    ${editingFixkostenId? `<button class="secondary" style="color:var(--text-danger);" onclick="deleteFixkosten()">Löschen</button>`:''}
     <button class="secondary" onclick="closeSheet()">Abbrechen</button>`);
 }
 function saveFixkosten(){
   const name = document.getElementById('fkName').value.trim();
   const amount = Number(document.getElementById('fkAmount').value);
   if(!name || !amount || amount<=0){ document.getElementById('fkErr').style.display='block'; return; }
-  state.fixkosten.push({id:uid(), name, amount});
+  if(editingFixkostenId){
+    const f = state.fixkosten.find(x=>x.id===editingFixkostenId);
+    Object.assign(f, {name, amount});
+  } else {
+    state.fixkosten.push({id:uid(), name, amount});
+  }
   saveState(); closeSheet(); render();
 }
-function deleteFixkosten(id){ state.fixkosten = state.fixkosten.filter(f=>f.id!==id); saveState(); render(); }
+function deleteFixkosten(id){
+  const delId = id || editingFixkostenId;
+  state.fixkosten = state.fixkosten.filter(f=>f.id!==delId);
+  saveState(); closeSheet(); render();
+}
 
-function openPotSheet(){
-  openSheet(`<h2>Spartopf anlegen</h2>
+let editingPotId = null;
+function openPotSheet(id){
+  editingPotId = id || null;
+  const p = id ? state.pots.find(x=>x.id===id) : {name:'', monthly:''};
+  openSheet(`<h2>${editingPotId? 'Spartopf bearbeiten':'Spartopf anlegen'}</h2>
     <label>Name</label>
-    <input type="text" id="potName" placeholder="z. B. Urlaub">
+    <input type="text" id="potName" value="${p.name}" placeholder="z. B. Urlaub">
     <label>Monatliche Rate</label>
-    <input type="number" inputmode="decimal" id="potMonthly" placeholder="z. B. 100">
+    <input type="number" inputmode="decimal" id="potMonthly" value="${p.monthly}" placeholder="z. B. 100">
     <p class="err" id="potErr" style="display:none;">Bitte Name und gültige Rate angeben.</p>
-    <button class="primary" onclick="savePot()">Anlegen</button>
+    <button class="primary" onclick="savePot()">${editingPotId? 'Speichern':'Anlegen'}</button>
+    ${editingPotId? `<button class="secondary" style="color:var(--text-danger);" onclick="deletePot()">Löschen</button>`:''}
     <button class="secondary" onclick="closeSheet()">Abbrechen</button>`);
 }
 function savePot(){
   const name = document.getElementById('potName').value.trim();
   const monthly = Number(document.getElementById('potMonthly').value);
   if(!name || !monthly || monthly<=0){ document.getElementById('potErr').style.display='block'; return; }
-  state.pots.push({id:uid(), name, monthly, balance:0});
+  if(editingPotId){
+    const p = state.pots.find(x=>x.id===editingPotId);
+    Object.assign(p, {name, monthly});
+  } else {
+    state.pots.push({id:uid(), name, monthly, balance:0});
+  }
   saveState(); closeSheet(); render();
 }
-function deletePot(id){ state.pots = state.pots.filter(p=>p.id!==id); saveState(); render(); }
+function deletePot(id){
+  const delId = id || editingPotId;
+  state.pots = state.pots.filter(p=>p.id!==delId);
+  saveState(); closeSheet(); render();
+}
 
 function openTransferSheet(potId){
   const pot = state.pots.find(p=>p.id===potId);
